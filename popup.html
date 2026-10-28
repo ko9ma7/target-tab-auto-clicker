@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4f7fc" />
+  <title>대상 탭 자동 클릭 · URL 목록 관리</title>
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="app" aria-labelledby="app-title">
+    <header class="topbar">
+      <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><rect x=".5" y=".5" width="39" height="39" rx="12" fill="#294BDB"/><path d="M13 20h13m-5-5 5 5-5 5" stroke="white" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12.5" cy="20" r="2" fill="#A5EDE4"/></svg></div>
+      <div class="brand-copy"><p class="eyebrow">MULTI-TAB MONITOR</p><h1 id="app-title">대상 탭 자동 클릭</h1></div>
+      <span class="version">v3.0</span>
+    </header>
+
+    <section class="master-bar" aria-labelledby="global-heading">
+      <div><h2 id="global-heading">전체 자동 클릭</h2><p id="global-desc">등록한 URL을 각각 감시합니다</p></div>
+      <label class="switch" for="global-switch">
+        <input id="global-switch" type="checkbox" role="switch" aria-describedby="global-desc" />
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+        <span class="sr-only">전체 자동 클릭 켜기/끄기</span>
+      </label>
+    </section>
+
+    <section class="panel" aria-labelledby="add-heading">
+      <div class="section-heading"><h2 id="add-heading">새 페이지 등록</h2><span class="section-meta">최대 50개</span></div>
+      <form id="add-form">
+        <label for="url-input" class="field-label">감시할 페이지 URL</label>
+        <input type="url" id="url-input" placeholder="https://claude.ai/chat/대화-ID" spellcheck="false" autocomplete="off" required />
+        <button id="use-current" class="quiet-button" type="button">현재 탭 주소 가져오기</button>
+        <label for="label-input" class="field-label">클릭할 버튼 문구</label>
+        <div class="form-row"><input id="label-input" type="text" maxlength="60" value="계속" required placeholder="계속 또는 Continue" /><button class="primary-button" id="add-btn" type="submit">+ 목록에 추가</button></div>
+      </form>
+      <p class="help-text">주소의 경로까지 일치해야 하며, ?검색값과 #해시는 비교하지 않습니다. 등록할 사이트의 접근 권한을 허용해 주세요.</p>
+      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="list-section" aria-labelledby="list-heading">
+      <div class="list-heading"><div><h2 id="list-heading">감시 목록 <span id="list-count" class="count">0</span></h2><p id="list-summary">등록한 페이지가 없습니다</p></div><button id="refresh-all" class="refresh-button" type="button" title="전체 탭 상태 새로고침">⟳ 새로고침</button></div>
+      <div id="empty-state" class="empty-state"><div class="empty-icon" aria-hidden="true">▤</div><strong>등록된 페이지가 없습니다</strong><p>위에서 URL을 추가하면 이곳에 목록이 표시됩니다.</p></div>
+      <div id="target-list" class="target-list" aria-live="off"></div>
+    </section>
+
+    <section class="footer-stat" aria-label="자동 클릭 요약"><span>전체 누적 자동 클릭</span><strong id="total-clicks">0회</strong></section>
+    <p class="footnote">ⓘ 다른 탭을 사용해도 열린 대상 탭은 감시합니다. Chrome이 백그라운드 탭을 폐기하거나 PC가 절전 상태이면 감시가 중단될 수 있습니다. 서비스 사용 제한을 우회하지 않습니다.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

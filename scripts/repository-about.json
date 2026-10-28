@@ -1,0 +1,14 @@
+{
+  "project_name": "Target Tab Auto Clicker",
+  "description": "Monitor selected Chrome tabs and automatically click Continue buttons when enabled. Multi-URL lists, per-tab controls, local settings.",
+  "topics": [
+    "chrome-extension",
+    "manifest-v3",
+    "browser-automation",
+    "auto-clicker",
+    "tab-manager",
+    "javascript",
+    "github-pages",
+    "open-source"
+  ]
+}

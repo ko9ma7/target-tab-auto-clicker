@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "대상 탭 자동 클릭 - 다중 URL 관리",
+  "short_name": "탭 자동 클릭",
+  "description": "여러 URL을 등록·삭제하고 각각의 탭에서 지정 버튼의 활성화 상태를 감시합니다.",
+  "version": "3.0.0",
+  "minimum_chrome_version": "102",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting",
+    "webNavigation"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "대상 탭 자동 클릭 설정",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

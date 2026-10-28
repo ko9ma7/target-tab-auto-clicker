@@ -1,0 +1,19 @@
+.DS_Store
+*.crx
+*.pem
+node_modules/
+__pycache__/
+.pytest_cache/
+dist/
+playwright-report/
+test-results/
+
+# Local secrets, credentials, and temporary backups
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx
+*.secret
+credentials*.json

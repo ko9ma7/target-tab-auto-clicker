@@ -1,0 +1,36 @@
+name: 버그 제보
+about: 감시 실패, 탭 연결, 설치 오류를 제보합니다
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **주의:** 실제 대화 URL, 이메일, 로그인 쿠키, 액세스 토큰, 개인정보는 적지 마세요.
+  - type: dropdown
+    id: issue
+    attributes:
+      label: 문제 유형
+      options: [버튼 자동 클릭 실패, 탭 연결 실패, URL 등록·삭제, 설치·업데이트, GitHub Pages, 기타]
+    validations:
+      required: true
+  - type: input
+    id: chrome
+    attributes:
+      label: Chrome 버전
+      placeholder: '예: 130.0.0.0'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 순서
+      description: 개인 URL 대신 example.com 같은 가상 주소를 사용해 주세요.
+      placeholder: '1. ...\n2. ...\n3. ...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작 / 실제 동작
+    validations:
+      required: true
