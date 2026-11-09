@@ -13,11 +13,11 @@
     <header class="topbar">
       <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><rect x=".5" y=".5" width="39" height="39" rx="12" fill="#294BDB"/><path d="M13 20h13m-5-5 5 5-5 5" stroke="white" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12.5" cy="20" r="2" fill="#A5EDE4"/></svg></div>
       <div class="brand-copy"><p class="eyebrow">MULTI-TAB MONITOR</p><h1 id="app-title">대상 탭 자동 클릭</h1></div>
-      <span class="version">v3.0</span>
+      <span class="version">v4.0</span>
     </header>
 
     <section class="master-bar" aria-labelledby="global-heading">
-      <div><h2 id="global-heading">전체 자동 클릭</h2><p id="global-desc">등록한 URL을 각각 감시합니다</p></div>
+      <div><h2 id="global-heading">전체 자동 클릭</h2><p id="global-desc">등록한 URL을 예약 시각에 자동으로 열어 확인합니다</p></div>
       <label class="switch" for="global-switch">
         <input id="global-switch" type="checkbox" role="switch" aria-describedby="global-desc" />
         <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
@@ -31,6 +31,8 @@
         <label for="url-input" class="field-label">감시할 페이지 URL</label>
         <input type="url" id="url-input" placeholder="https://claude.ai/chat/대화-ID" spellcheck="false" autocomplete="off" required />
         <button id="use-current" class="quiet-button" type="button">현재 탭 주소 가져오기</button>
+        <label for="interval-input" class="field-label">다음 확인 주기 (기본 5시간)</label>
+        <div class="interval-form"><input type="number" id="interval-input" min="1" max="48" step="1" value="5" required /><span>시간마다 확인 · 버튼이 없으면 5분 후 재시도</span></div>
         <label for="label-input" class="field-label">클릭할 버튼 문구</label>
         <div class="form-row"><input id="label-input" type="text" maxlength="60" value="계속" required placeholder="계속 또는 Continue" /><button class="primary-button" id="add-btn" type="submit">+ 목록에 추가</button></div>
       </form>
@@ -39,13 +41,13 @@
     </section>
 
     <section class="list-section" aria-labelledby="list-heading">
-      <div class="list-heading"><div><h2 id="list-heading">감시 목록 <span id="list-count" class="count">0</span></h2><p id="list-summary">등록한 페이지가 없습니다</p></div><button id="refresh-all" class="refresh-button" type="button" title="전체 탭 상태 새로고침">⟳ 새로고침</button></div>
+      <div class="list-heading"><div><h2 id="list-heading">감시 목록 <span id="list-count" class="count">0</span></h2><p id="list-summary">등록한 페이지가 없습니다</p></div><button id="refresh-all" class="refresh-button" type="button" title="예약 시각과 관계없이 전체 페이지를 확인">⟳ 지금 전체 확인</button></div>
       <div id="empty-state" class="empty-state"><div class="empty-icon" aria-hidden="true">▤</div><strong>등록된 페이지가 없습니다</strong><p>위에서 URL을 추가하면 이곳에 목록이 표시됩니다.</p></div>
       <div id="target-list" class="target-list" aria-live="off"></div>
     </section>
 
     <section class="footer-stat" aria-label="자동 클릭 요약"><span>전체 누적 자동 클릭</span><strong id="total-clicks">0회</strong></section>
-    <p class="footnote">ⓘ 다른 탭을 사용해도 열린 대상 탭은 감시합니다. Chrome이 백그라운드 탭을 폐기하거나 PC가 절전 상태이면 감시가 중단될 수 있습니다. 서비스 사용 제한을 우회하지 않습니다.</p>
+    <p class="footnote">ⓘ 예약 시각에 닫힌 탭은 백그라운드에서 자동으로 열어 확인하고 약 2분 뒤 닫습니다. Chrome이 완전히 종료되거나 PC가 절전 상태면 실행할 수 없으며, 재개 후 확인합니다. 외부 서비스의 사용 제한을 우회하지 않습니다.</p>
   </main>
   <script src="popup.js"></script>
 </body>

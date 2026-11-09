@@ -6,15 +6,29 @@
 
 ### 원하는 페이지의 `계속` 버튼을 자동으로 감시하세요
 
-**여러 URL 등록 · 개별 ON/OFF · 탭 재연결 · 클릭 기록**
+**여러 URL 등록 · 기본 5시간 예약 확인 · 닫힌 탭 자동 열기 · 반복 클릭 기록**
 
-![Version](https://img.shields.io/badge/version-3.0.0-3156e5) ![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-2345c9) ![License](https://img.shields.io/badge/license-MIT-14745c) ![Build](https://img.shields.io/badge/build-Python%20stdlib-lightgrey)
+![Version](https://img.shields.io/badge/version-4.0.0-3156e5) ![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-2345c9) ![License](https://img.shields.io/badge/license-MIT-14745c) ![Build](https://img.shields.io/badge/build-Python%20stdlib-lightgrey)
 
 Chrome에서 지정한 웹페이지의 버튼이 비활성화되었다가 활성화되면 자동으로 클릭하는 **무료·로컬 실행** 확장프로그램입니다. 별도의 서버나 계정이 필요하지 않습니다.
 
 [빠른 GitHub 공개](#-windows-cmd로-github에-올리기) · [설치 방법](#-설치-방법) · [사용 방법](#-사용-방법) · [문제 해결](#-문제-해결)
 
 </div>
+
+---
+
+## 🆕 v4.0.0: 닫힌 탭까지 예약 자동 확인 (2026-11-09)
+
+- **클릭 시간 기록**: URL별 마지막 자동 클릭 시각을 `chrome.storage.local`에 기록하고 `마지막 클릭 + 확인 주기`를 다음 예약 시각으로 사용합니다. 기존 v3 클릭 기록도 이어서 사용합니다.
+- **기본 5시간**: 새 URL은 5시간으로 시작하며 목록에서 각 URL을 **1~48시간**으로 따로 수정할 수 있습니다. 새 주소는 등록 후 첫 확인을 바로 시작합니다.
+- **자동 열기/닫기**: 예약 시각에 탭이 없으면 **비활성 탭을 자동 생성**, 버튼 상태를 확인하고 약 2분 후 자동 생성된 탭만 닫습니다. 사용자가 선택한 탭은 자동으로 닫지 않습니다.
+- **재시도**: 확인 시 버튼이 보이지 않거나 준비되지 않았거나 연결 오류가 있으면 **5분 후 다시 확인**합니다. 클릭에 성공하면 예약을 그 시점 기준으로 다시 5시간(또는 설정 시간) 뒤로 미룹니다.
+- **연속 클릭**: 새로운 `계속`/`Continue` 버튼이 나타나면 같은 방문 중 이어서 클릭합니다. 동일 버튼을 그대로 두 번 클릭하지 않으며 10분당 30회 초과 시 보호 제한이 작동합니다.
+- **복구**: `chrome.alarms`를 이용해 서비스 워커 재시작 후에도 저장된 예약 시각을 복구하고, 탭이 브라우저에 의해 폐기되면 확인 시 다시 로드합니다.
+- **제한**: Chrome이 완전히 종료되거나 PC가 절전 중일 때는 실행할 수 없습니다. 사이트의 로그인 만료, 인증/CAPTCHA, DOM 구조 변경, 서버 측 제한은 우회하지 않습니다. Chrome 알람은 지정 시각보다 늦게 실행될 수 있습니다.
+
+**기존 설치에서 업데이트할 때:** 기존에 설치했던 폴더의 파일을 백업한 후 동일한 경로에 새 ZIP의 확장프로그램 파일을 덮어쓰고, `chrome://extensions/`에서 기존 확장의 **새로고침**을 누르세요. *새 폴더에 별도 설치하면 기존 등록 URL·클릭 기록은 자동으로 이전되지 않습니다.*
 
 ---
 
@@ -31,85 +45,90 @@ Chrome에서 지정한 웹페이지의 버튼이 비활성화되었다가 활성
 | **URL 목록** | 최대 **50개**의 웹페이지 주소 등록·삭제. 동일한 `origin + pathname` 중복 등록 방지 |
 | **버튼 문구 지정** | URL별로 `계속`, `Continue` 등 텍스트 설정 |
 | **개별/전체 ON·OFF** | 한 주소만 중단하거나 전체 감시 중지 가능 |
-| **탭 추적** | 각 URL에 **일치하는 탭 1개**를 연결하고 닫았다 다시 열면 재연결 |
-| **백그라운드 감시** | 다른 탭을 사용하더라도 대상 탭이 실행 중이면 상태 감시 |
+| **닫힌 탭 자동 열기** | 예약 확인 시 해당 URL의 탭이 없으면 **비활성 탭을 생성**하고 약 2분 후 자동 닫기 |
+| **URL별 예약 확인** | 기본 **5시간**(각 URL마다 1~48시간 변경 가능). 클릭 직후 다음 시각 다시 계산, 버튼이 없거나 확인 실패면 **5분 재시도** |
+| **백그라운드 감시** | `chrome.alarms` 알람으로 매분 예약 시각 확인; 기존 탭은 화면 변화도 감시 |
 | **조건부 클릭** | Chrome의 `disabled`, `aria-disabled`, `data-disabled`, `pointer-events` 및 DOM 변경 확인 |
-| **중복 클릭 방지** | 동일한 버튼이 계속 표시되는 동안 반복 클릭하지 않도록 설계 |
-| **상태 및 통계** | 탭 없음, 활성화 대기, 클릭 완료, 감시 중지와 URL별 클릭 횟수 표시 |
+| **연속 클릭 + 중복 방지** | 새로운 `계속` 버튼이 나타나면 차례로 클릭하고, 동일 버튼은 다시 누르지 않음(비활성화→활성화되면 재허용). 10분당 30회 안전 제한 |
+| **상태 및 통계** | URL별 마지막 클릭, 누적 횟수, 최근 확인 시각, 다음 예약 시각, 수동 즉시 확인 |
 | **로컬 저장** | URL과 설정·클릭 통계를 `chrome.storage.local`에 저장. 전송용 백엔드 없음 |
 
-## 🚀 Windows CMD로 GitHub에 올리기 — 기존 `github-bootstrap.cmd` 방식
+## 🚀 Windows CMD로 GitHub에 올리기
 
-이 프로젝트는 **익숙한 CMD 배포 방식**을 사용합니다. PowerShell 배포 스크립트 없이 Git for Windows + GitHub CLI만 사용합니다. 확장프로그램은 GitHub Pages 자체에서 실행되는 것이 아니라 Chrome에 설치됩니다. Pages는 안내·다운로드 사이트입니다.
+저장소 생성, 소스 업로드, **About (Description / Website / Topics)**, GitHub Pages 워크플로 설정을 자동화했습니다. **Windows의 `publish.cmd`를 두 번 클릭**하거나 CMD에서 원하는 저장소 이름을 지정하세요.
 
-### 준비 (최초 1회)
+### 준비물 (최초 1회)
 
-1. [Git for Windows](https://git-scm.com/downloads/win), [GitHub CLI](https://cli.github.com/) 설치 후 CMD를 다시 엽니다.
-2. 로그인되지 않았다면 실행 중 `gh auth login --web --git-protocol https`를 통해 브라우저에서 로그인합니다.
-3. Git 커밋 이름과 이메일을 최초 한 번만 설정합니다.
+1. [Git for Windows](https://git-scm.com/downloads/win)와 [GitHub CLI (`gh`)](https://cli.github.com/)를 설치합니다. 설치 후 **CMD를 다시 실행**합니다.
+2. GitHub 계정을 준비합니다. 로그인되어 있지 않으면 스크립트가 **브라우저 로그인**을 시작합니다. 개인 액세스 토큰(PAT)을 코드에 입력할 필요가 없습니다.
+3. Git 사용자 이름과 이메일이 설정되어 있지 않다면 CMD에서 한 번만 입력합니다. (예시를 실제 본인 값으로 변경)
 
 ```bat
 git config --global user.name "Your Name"
 git config --global user.email "your-email@example.com"
 ```
 
-GitHub에서 제공하는 [비공개 커밋 이메일](https://docs.github.com/en/account-and-profile/how-tos/email-preferences/setting-your-commit-email-address)을 사용해도 됩니다.
+GitHub에 이메일을 공개하고 싶지 않다면 [GitHub의 비공개 이메일 주소](https://docs.github.com/en/account-and-profile/how-tos/email-preferences/setting-your-commit-email-address)를 사용하세요.
 
-### 1. 최초 업로드 — `github-bootstrap.cmd`
+### CMD에서 한 번에 배포
 
-프로젝트 폴더의 **`github-bootstrap.cmd`를 더블클릭**합니다. 기본 저장소 이름은 `target-tab-auto-clicker`입니다. 사용자의 GitHub 로그인 계정을 자동 확인합니다.
-
-CMD에서 원하는 저장소 이름을 지정할 수도 있습니다.
+`target-tab-auto-clicker` 폴더에서 CMD를 열고 다음 중 하나를 실행합니다.
 
 ```bat
-github-bootstrap.cmd
-github-bootstrap.cmd my-auto-clicker
-github-bootstrap.cmd ko9ma7/target-tab-auto-clicker
+:: 기본 저장소 이름 = target-tab-auto-clicker (공개)
+publish.cmd
+
+:: 원하는 이름으로 공개 저장소 생성 또는 기존 저장소 업데이트
+publish.cmd my-auto-clicker
+
+:: 특정 사용자/조직의 저장소
+publish.cmd GITHUB_USERNAME/my-auto-clicker
+
+:: 비공개 저장소로 생성하고 싶다면 (Pages 이용 요금제 제한 확인)
+publish.cmd my-private-tool private
 ```
 
-또는 `github-bootstrap.cmd` 상단의 `set "REPO_NAME=target-tab-auto-clicker"` 값을 원하는 이름으로 변경하세요. 이전에 사용하던 `publish.cmd` 역시 동일한 CMD 배포 프로그램을 실행하는 호환용 파일입니다.
+명령을 입력하는 대신 `publish.cmd` 파일을 **더블클릭**해도 기본 이름으로 진행됩니다.
 
-동작 순서: Git/gh 확인 → **현재 폴더에 독립 `.git` 초기화** → GitHub 로그인 확인 → 업로드 예정 파일 목록 출력 → `Y` 확인 → 커밋 → 공개 저장소 생성(이미 있으면 재사용) → 안전한 동기화·푸시 → **About Description/Website/Topics 설정** → Pages의 Actions 방식 활성화 시도.
+스크립트는 다음을 순서대로 수행합니다.
 
-**공개 업로드 주의:** 스크립트는 새 저장소를 기본적으로 Public으로 만듭니다. 공개할 수 없는 코드·개인정보가 있는지 파일 목록을 확인하고 `Y`를 누르세요. `gh` 로그인 토큰이나 암호를 소스에 기록하지 않습니다. 기존 저장소의 공개/비공개 상태는 변경하지 않습니다.
+1. Git 및 GitHub CLI 확인, 필요하면 브라우저로 GitHub 로그인
+2. 업로드할 `OWNER/REPOSITORY`와 공개 범위, **Git에 추가될 파일 목록을 보여주고 최종 확인 `[y/N]` 요청**
+3. 프로젝트 폴더의 Git 초기화, 변경 파일 커밋 (기존 커밋은 유지)
+4. 저장소가 없으면 생성, 있으면 현재 저장소에 `main` 브랜치로 일반 `git push`
+5. **About 설명, Website, Topics 자동 설정** (원본: [`scripts/repository-about.json`](scripts/repository-about.json))
+6. GitHub Pages를 **GitHub Actions** 방식으로 설정 시도
+7. GitHub 저장소 주소, 배포 사이트 주소, Actions 확인 링크 출력
 
-### 2. 이후 업데이트 — `github-update.cmd`
+**중요:** `git push --force`를 사용하지 않습니다. 다른 저장소를 가리키는 `origin`이 있거나 원격에 다른 이력이 있으면 안전하게 중단합니다. GitHub 저장소를 자동으로 **공개** 생성하므로 공개 범위와 개인 정보가 없는 파일인지 확인한 뒤 `y`를 누르세요. 기존 저장소가 있다면 공개/비공개 상태를 변경하지 않습니다.
 
-처음 업로드가 성공했다면 동일한 프로젝트 폴더에서 `github-update.cmd`를 더블클릭합니다.
+### ⚠️ `This folder belongs to a different Git repository` 오류 해결
+
+Windows 사용자 폴더 자체(예: `C:\Users\<사용자명>`)가 Git 저장소로 초기화된 경우, 그 아래 `Downloads`, `Desktop`의 프로젝트에서 `git rev-parse --show-toplevel`을 실행하면 사용자 폴더를 가리킬 수 있습니다. **상위 폴더의 `.git`을 삭제하지 마세요.**
+
+- **가장 간단한 해결책:** 프로젝트 폴더를 `C:\Projects\target-tab-auto-clicker\`처럼 상위 Git 저장소 *밖*으로 옮긴 뒤 `publish.cmd`를 실행합니다. `C:\Projects` 폴더는 필요하면 직접 생성하세요.
+- **개선된 `publish.cmd` (2026-10-28 수정):** 현재 프로젝트에 `.git`이 없고 상위 저장소가 프로젝트 파일을 **추적하지 않는 경우**, 프로젝트 폴더에 별도의 `.git`을 안전하게 생성합니다. 그래서 기존 위치에서도 계속 진행할 수 있습니다. 상위 저장소의 파일은 스테이징하거나 업로드하지 않습니다.
+- **상위 저장소가 프로젝트 파일을 이미 추적한다면:** 자동 초기화를 거부합니다. 이 경우 프로젝트를 상위 저장소 밖으로 옮겨 실행하세요. 상위 저장소를 초기화하거나 `git push --force`를 사용하지 마세요.
+
+GitHub 사용자 이름이 `YOUR_USERNAME`, 저장소가 `target-tab-auto-clicker`라면 다음 명령으로 실행합니다. 본인의 GitHub 계정으로 로그인한 경우에는 그냥 `publish.cmd`만 입력해도 됩니다.
 
 ```bat
-github-update.cmd
+publish.cmd YOUR_USERNAME/target-tab-auto-clicker
 ```
 
-기존 저장소에 연결된 `.git`과 `origin`을 확인한 다음 동일한 안전한 배포 절차를 사용합니다. `main`에 푸시되면 GitHub Actions가 Pages 웹사이트 및 설치용 ZIP을 다시 빌드합니다. 기본 저장소 이름을 처음과 다르게 지정했다면 업데이트 실행 시 같은 이름을 명시하세요.
+정상 진행 시 업로드 파일 목록을 보여주고 공개 업로드 여부를 `[y/N]`으로 다시 묻습니다. `y`를 입력한 경우에만 커밋 및 업로드를 시도합니다. 이미 GitHub에 다른 이력이 있는 저장소라면 강제 덮어쓰지 않고 일반 `git push` 결과를 따릅니다.
 
-### 3. 원격 저장소 동기화 — `git-safe-sync.cmd`
 
-최초 업로드와 업데이트 과정에서 자동 호출합니다. 원한다면 프로젝트 폴더에서 별도로 실행할 수 있습니다.
+**배포 후 확인**
 
-- GitHub에 `main`이 없으면 일반 `git push -u origin main`
-- GitHub `main`이 로컬 이력의 조상이면 일반 푸시
-- 로컬 커밋 없이 원격만 앞서면 `fast-forward` 동기화
-- **서로 다른 이력 또는 로컬·원격 모두 변경되었으면 중단** (강제 푸시·자동 이력 덮어쓰기 없음)
+- 저장소: `https://github.com/GITHUB_USERNAME/REPOSITORY_NAME`
+- 설치 사이트: `https://GITHUB_USERNAME.github.io/REPOSITORY_NAME/`
+- GitHub Actions: 저장소 **Actions → Build and deploy GitHub Pages**
+- **Repository Social Preview**: 별도 수동 등록 → [ABOUT.md](ABOUT.md)
 
-### `C:\Users\...`가 다른 Git 저장소라는 오류가 발생하면?
+첫 실행 시 Pages API 권한이 부족할 수 있습니다. 이런 경우 저장소의 **Settings → Pages → Build and deployment → Source → GitHub Actions**를 수동 설정한 후 Actions에서 재실행하세요. 배포가 완료될 때까지 사이트 주소가 곧바로 열리지 않을 수 있습니다.
 
-첨부하신 예전 `github-bootstrap.cmd`처럼 이 배포 스크립트도 **먼저 프로젝트 폴더에서 `git init -b main`**을 수행하고, `git rev-parse --show-toplevel`이 **정확히 프로젝트 폴더**를 가리키는지 확인합니다. 이 방법은 상위 사용자 폴더에 `.git`이 있어도 프로젝트만 별도 저장소로 배포하게 해줍니다.
-
-프로젝트 폴더에 기존 `.git`이 있으나 다른 저장소에 연결되어 있으면 보호를 위해 중단합니다. **상위 폴더의 `.git`은 삭제하지 마세요.** 프로젝트가 다른 저장소에서 이미 추적되고 있었다면 분리 전 기존 작업에 어떤 영향이 있는지 확인해야 합니다.
-
-### About과 GitHub Pages
-
-- 저장소 이름: `target-tab-auto-clicker` (또는 입력한 이름)
-- Description: `Monitor selected Chrome tabs and automatically click Continue buttons when enabled. Multi-URL lists, per-tab controls, local settings.`
-- Website: `https://USERNAME.github.io/REPOSITORY/`
-- Topics: `chrome-extension`, `manifest-v3`, `browser-automation`, `auto-clicker`, `tab-manager`, `javascript`, `github-pages`, `open-source`
-
-About 문구는 `github-bootstrap.cmd` 상단에서 수정할 수 있습니다. 추가 설명은 [ABOUT.md](ABOUT.md), 참고 메타데이터는 [`scripts/repository-about.json`](scripts/repository-about.json)에 있습니다.
-
-푸시 성공 후 저장소의 **Actions**에서 `Build and deploy GitHub Pages` 작업을 확인하세요. 처음 설정에서 Pages 자동 활성화가 실패하면 **Settings → Pages → Source → GitHub Actions**를 직접 선택합니다. [Social Preview 이미지](docs/repository-social-preview.png)는 **Settings → General → Social preview**에서 직접 올려야 합니다.
-
-> **기술적 한계:** 스크립트는 GitHub의 이력을 강제로 덮어쓰지 않습니다. 저장소 생성 시 GitHub 웹에서 README를 별도로 만든 경우 로컬과 원격의 첫 커밋이 달라서 동기화가 멈출 수 있습니다. 가능하면 새 빈 저장소를 사용하거나 기존 이력을 수동으로 병합하세요.
+**이후 업데이트**는 같은 폴더에서 `publish.cmd`만 다시 실행하면 변경 내용만 커밋 후 업로드합니다. GitHub Actions는 `main` 브랜치에 push 될 때마다 설치 ZIP과 웹사이트를 다시 빌드합니다.
 
 ---
 
@@ -140,8 +159,8 @@ GitHub 저장소에서 **Code → Download ZIP**을 클릭하고 압축을 풉�
 1. 감시하려는 ChatGPT/Claude 등의 **정확한 대화 URL**을 브라우저에서 복사합니다.
 2. 확장프로그램 팝업의 **감시할 페이지 URL** 입력창에 붙여넣습니다. **현재 탭 주소 가져오기**도 사용할 수 있습니다.
 3. **클릭할 버튼 문구**에 실제 표시되는 버튼 텍스트를 입력합니다. 예: `계속`, `Continue`.
-4. **+ 목록에 추가** 클릭 후 Chrome의 해당 도메인 접근 권한 요청을 허용합니다.
-5. 다른 페이지도 같은 방법으로 추가합니다. 목록에서 각 항목의 **스위치**, **탭 열기/탭 이동**, **삭제**를 사용할 수 있습니다.
+4. 확인 주기를 선택합니다(기본 5시간). **+ 목록에 추가** 클릭 후 Chrome의 해당 도메인 접근 권한 요청을 허용합니다.
+5. 다른 페이지도 같은 방법으로 추가합니다. 목록에서 각 항목의 **주기 조정**, **지금 확인**, **탭 열기/탭 이동**, **스위치**, **삭제**를 사용할 수 있습니다.
 6. 전체 감시를 중지하고 싶을 때는 맨 위 **전체 자동 클릭**을 끕니다.
 
 ### URL 처리 예시
@@ -156,18 +175,18 @@ GitHub 저장소에서 **Code → Download ZIP**을 클릭하고 압축을 풉�
 
 ### 클릭 동작 방식
 
-- **ChatGPT** (`chatgpt.com`, `chat.openai.com`): 사용량 제한 안내 영역의 지정한 문구와 일치하는 버튼만 클릭하도록 제한합니다.
-- **그 외 사이트**: 지정 버튼이 **비활성화 → 활성화**되는 변화를 실제로 확인한 경우에만 클릭합니다. 처음부터 활성화된 일반 버튼은 클릭하지 않습니다.
-- 화면 갱신은 `MutationObserver`와 보조 폴링(약 1.6초)으로 처리합니다. 완전한 실시간 동작을 보장하지 않습니다.
+- **ChatGPT** (`chatgpt.com`, `chat.openai.com`): 사용량 제한 안내 영역의 지정한 문구와 일치하는 버튼을 클릭합니다.
+- **그 외 등록된 사이트**: 지정 버튼이 페이지를 열자마자 활성화되어 있어도 클릭할 수 있습니다. **신뢰할 수 있는 정확한 URL만 등록**해야 합니다.
+- 화면 갱신은 `MutationObserver`와 보조 폴링(약 1.8초)으로 처리합니다. 완전한 실시간 동작을 보장하지 않습니다.
 - 서비스의 이용 제한을 우회하거나 사용량을 늘리지 않습니다. 외부 사이트 DOM 구조가 변경되면 동작하지 않을 수 있습니다.
 
 ## 🛠 문제 해결
 
 | 현상 | 조치 |
 |---|---|
-| 대상 탭 없음 | 등록한 정확한 URL의 탭을 열고 팝업의 **새로고침**을 누릅니다. |
+| 대상 탭 없음 | 자동으로 다음 예약 시각에 탭을 엽니다. 즉시 확인하려면 해당 항목의 **지금 확인**을 누르세요. |
 | 버튼이 눌리지 않음 | 버튼 문구와 사이트 접근 권한을 확인합니다. 대상 버튼이 비활성→활성으로 전환되었는지도 확인합니다. |
-| 백그라운드에서 지연 | Chrome 메모리 절약/절전 설정을 확인합니다. 폐기된 탭은 실행되지 않습니다. |
+| 백그라운드에서 지연 | Chrome이 열린 상태라면 알람 시각에 폐기된 탭도 다시 로드합니다. PC가 절전 상태이거나 Chrome이 완전히 종료되면 실시간 확인할 수 없고 재개 후 확인합니다. |
 | 로그인 화면에서 작동하지 않음 | 로그인 후 **대상 대화 URL**을 열어야 합니다. 로그인·보안 화면을 우회하지 않습니다. |
 | 중복 클릭 | v1/v2 확장프로그램과 v3가 동시에 실행 중인지 확인하고 이전 버전은 끕니다. |
 | 설치 오류 | 압축을 해제했는지, `manifest.json`이 선택한 폴더 안에 있는지 확인합니다. |
@@ -198,11 +217,9 @@ GitHub 저장소에서 **Code → Download ZIP**을 클릭하고 압축을 풉�
 
 ```text
 .
-├── github-bootstrap.cmd          최초 업로드: GitHub 생성·About·Pages 설정
-├── github-update.cmd             이후 업로드: 기존 프로젝트 업데이트
-├── git-safe-sync.cmd             원격 이력 확인 및 안전한 동기화
-├── publish.cmd                   기존 명령 호환용 CMD 바로가기
-├── scripts/repository-about.json About 참고 메타데이터
+├── publish.cmd                   Windows CMD 원클릭 GitHub 배포
+├── scripts/publish.ps1           Git/gh 자동화 및 About 설정
+├── scripts/repository-about.json About 메타데이터
 ├── ABOUT.md                      저장소 소개 및 Social Preview 안내
 ├── manifest.json                 Chrome 확장프로그램 매니페스트
 ├── background.js                 URL별 대상 탭 및 클릭 권한 처리
@@ -256,8 +273,8 @@ python -m http.server 8000 --directory dist/site
 브라우저에서 `http://localhost:8000/`을 열면 다운로드 버튼까지 작동합니다. 결과:
 
 - `dist/site/`: GitHub Pages 업로드 대상 사이트 (다운로드 ZIP 포함)
-- `dist/site/downloads/target-tab-auto-clicker-v3.0.0.zip`: 사이트 방문자용 설치 ZIP
-- `dist/target-tab-auto-clicker-v3.0.0.zip`: GitHub Release에 첨부할 설치 ZIP
+- `dist/site/downloads/target-tab-auto-clicker-v4.0.0.zip`: 사이트 방문자용 설치 ZIP
+- `dist/target-tab-auto-clicker-v4.0.0.zip`: GitHub Release에 첨부할 설치 ZIP
 
 패키지에는 확장프로그램 필수 실행 파일과 아이콘·README·LICENSE만 포함됩니다. 비밀번호·토큰·비공개 설정 파일은 포함되지 않습니다.
 
@@ -265,7 +282,7 @@ python -m http.server 8000 --directory dist/site
 
 ### 1. GitHub 저장소 만들기
 
-**Windows CMD 사용자는 위 `github-bootstrap.cmd` 방법을 권장합니다.** 아래 수동 방법은 다른 운영체제나 Git 숙련자를 위한 대안입니다.
+**Windows CMD 사용자는 위 [Windows CMD로 GitHub에 올리기](#-windows-cmd로-github에-올리기)를 권장합니다.** 아래 수동 방법은 다른 운영체제나 Git 숙련자를 위한 대안입니다.
 
 1. GitHub 로그인 → **New repository**
 2. 예: `target-tab-auto-clicker`라는 **Public** 저장소 생성
@@ -277,7 +294,7 @@ Git CLI를 사용한다면:
 ```bash
 git init
 git add .
-git commit -m "Publish Target Tab Auto Clicker v3.0"
+git commit -m "Publish Target Tab Auto Clicker v4.0"
 git branch -M main
 git remote add origin https://github.com/USERNAME/REPOSITORY.git
 git push -u origin main
@@ -300,19 +317,19 @@ git push -u origin main
 
 저장소 우측 **About → Edit**에서 설명과 Website에 Pages URL을 넣습니다. Topic 예시: `chrome-extension`, `manifest-v3`, `automation`, `tab-manager`, `javascript`, `open-source`.
 
-GitHub **Settings → General → Social preview**에서 `docs/repository-social-preview.png`를 지정하면 공유 카드가 표시됩니다. 자세한 소개 문구 및 수동 입력 방법은 [ABOUT.md](ABOUT.md)를 확인하세요. `github-bootstrap.cmd`를 사용하면 Description / Website / Topics는 자동 설정됩니다.
+GitHub **Settings → General → Social preview**에서 `docs/repository-social-preview.png`를 지정하면 공유 카드가 표시됩니다. 자세한 소개 문구 및 수동 입력 방법은 [ABOUT.md](ABOUT.md)를 확인하세요. `publish.cmd`를 사용하면 Description / Website / Topics는 자동 설정됩니다.
 
 ### 4. GitHub Releases (선택)
 
-`Releases → Draft a new release`에서 태그 `v3.0.0`을 만들고 `dist/target-tab-auto-clicker-v3.0.0.zip`을 업로드하면 버전별 설치 파일을 기록할 수 있습니다. 다만 Pages 소개 사이트에서도 ZIP을 바로 다운로드할 수 있으므로 Release 업로드가 필수는 아닙니다.
+`Releases → Draft a new release`에서 태그 `v4.0.0`을 만들고 `dist/target-tab-auto-clicker-v4.0.0.zip`을 업로드하면 버전별 설치 파일을 기록할 수 있습니다. 다만 Pages 소개 사이트에서도 ZIP을 바로 다운로드할 수 있으므로 Release 업로드가 필수는 아닙니다.
 
 ## 🏷 GitHub About 소개
 
-**Description:** Monitor selected Chrome tabs and automatically click Continue buttons when enabled. Multi-URL lists, per-tab controls, local settings.
+**Description:** 여러 URL의 탭에서 '계속/Continue' 버튼이 활성화되면 자동 클릭하는 Chrome 확장프로그램 | URL별 ON/OFF · 로컬 저장
 
 **Topics:** `chrome-extension` · `manifest-v3` · `browser-automation` · `auto-clicker` · `tab-manager` · `javascript` · `github-pages` · `open-source`
 
-자동 적용되는 Description과 Topics는 **`github-bootstrap.cmd` 상단**에서 수정합니다. [`scripts/repository-about.json`](scripts/repository-about.json)은 참고용 메타데이터이며 자동 동기화되지는 않습니다. [ABOUT.md](ABOUT.md)에 Social Preview 설정법도 정리했습니다.
+설명과 Topics는 [`scripts/repository-about.json`](scripts/repository-about.json)에서 수정할 수 있으며, [ABOUT.md](ABOUT.md)에 복사해 쓸 수 있는 내용과 Social Preview 설정법을 정리했습니다.
 
 ## ⚙️ Configuration
 

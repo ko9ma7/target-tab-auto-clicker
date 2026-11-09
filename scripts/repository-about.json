@@ -1,6 +1,6 @@
 {
   "project_name": "Target Tab Auto Clicker",
-  "description": "Monitor selected Chrome tabs and automatically click Continue buttons when enabled. Multi-URL lists, per-tab controls, local settings.",
+  "description": "여러 URL의 탭에서 '계속/Continue' 버튼이 활성화되면 자동 클릭하는 Chrome 확장프로그램 | URL별 ON/OFF · 로컬 저장",
   "topics": [
     "chrome-extension",
     "manifest-v3",

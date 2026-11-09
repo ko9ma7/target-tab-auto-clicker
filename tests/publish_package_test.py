@@ -1,4 +1,4 @@
-"""Static checks for Windows CMD publishing package (no GitHub access)."""
+"""Static packaging checks. Does not call GitHub or execute PowerShell."""
 import json
 import re
 from pathlib import Path
@@ -9,20 +9,21 @@ assert len(about['description']) < 350
 assert len(about['topics']) >= 5
 assert len(about['topics']) == len(set(about['topics']))
 assert all(re.fullmatch(r'[a-z0-9-]+', tag) for tag in about['topics'])
-boot = (root / 'github-bootstrap.cmd').read_text(encoding='utf-8')
-update = (root / 'github-update.cmd').read_text(encoding='utf-8')
-sync = (root / 'git-safe-sync.cmd').read_text(encoding='utf-8')
+cmd = (root / 'publish.cmd').read_text(encoding='utf-8')
+ps = (root / 'scripts/publish.ps1').read_text(encoding='utf-8')
 readme = (root / 'README.md').read_text(encoding='utf-8')
-for snippet in ('git init -b main','rev-parse --show-toplevel','gh repo create','gh repo edit','--add-topic','build_type=workflow','git-safe-sync.cmd','git add -A','git commit','choice /c YN'):
-    assert snippet in boot, f'Bootstrap missing {snippet}'
-for snippet in ('if not exist ".git"','git remote get-url origin','github-bootstrap.cmd'):
-    assert snippet in update, f'Update missing {snippet}'
-for snippet in ('merge-base','git push -u origin main','git fetch --no-tags origin main','git merge --ff-only'):
-    assert snippet in sync, f'Safe sync missing {snippet}'
-assert 'push --force' not in boot+update+sync
-assert 'git reset --hard' not in boot+update+sync
-assert (root / 'publish.cmd').is_file()
-assert 'github-bootstrap.cmd' in readme and 'github-update.cmd' in readme
+assert 'powershell.exe -NoProfile' in cmd
+assert '%*' in cmd
+for snippet in ('gh', 'repo', 'create', 'git', 'push', '--add-topic', 'build_type=workflow', 'Confirm', 'origin', 'repository-about.json'):
+    assert snippet in ps, f'Publisher missing {snippet}'
+assert 'push --force' not in ps and "@('push','--force'" not in ps
+assert 'publish.cmd my-auto-clicker' in readme
+assert 'scripts/repository-about.json' in readme
 assert 'ABOUT.md' in readme
 assert (root / 'docs/repository-social-preview.png').is_file()
-print('PASS: user-style CMD bootstrap and safe-sync package checks')
+
+# Nested parent Git repositories must not accidentally become the upload target.
+for snippet in ("Join-Path $projectRoot '.git'", "'ls-files'", "'rev-parse','--show-toplevel'", "Run 'git' @('init')", "if ($actualRoot -ine $projectRoot)"):
+    assert snippet in ps, f'Missing nested-repository safety: {snippet}'
+
+print('PASS: CMD publishing package, About metadata, nested Git protection, no force push')

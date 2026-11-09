@@ -15,3 +15,11 @@ body{width:432px;min-width:325px;margin:0;background:var(--soft);color:var(--ink
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 [hidden]{display:none!important}
+/* v4: per-URL schedule and on-demand checks */
+input[type=number]{border:1px solid #cfdaea;border-radius:8px;background:#fcfdff;color:var(--ink);height:32px;padding:0 8px;font:inherit;font-size:11px;outline:none}
+input[type=number]:focus-visible{border-color:#5172f3;box-shadow:0 0 0 3px #dfe7ff}
+.interval-form{display:flex;gap:8px;align-items:center}.interval-form input{width:66px;flex:none}.interval-form span{font-size:10px;color:var(--muted)}
+.schedule-info{margin-top:8px;font-size:10px;color:#627390;line-height:1.5;word-break:keep-all}
+.interval-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+.interval-caption{display:flex;align-items:center;gap:5px;color:#63758d;font-size:10px}.interval-edit{width:57px}
+.interval-row .mini-button{white-space:nowrap}

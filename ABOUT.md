@@ -1,6 +1,6 @@
 # GitHub About — 프로젝트 소개
 
-GitHub 저장소 오른쪽 **About** 영역에 표시될 내용을 정리했습니다. `github-bootstrap.cmd`를 사용하면 **Description / Website / Topics가 자동으로 설정**됩니다. GitHub의 Repository Social Preview 이미지는 수동 등록이 필요합니다.
+GitHub 저장소 오른쪽 **About** 영역에 표시될 내용을 정리했습니다. `publish.cmd`를 사용하면 **Description / Website / Topics가 자동으로 설정**됩니다. GitHub의 Repository Social Preview 이미지는 수동 등록이 필요합니다.
 
 ## Repository
 
@@ -8,19 +8,19 @@ GitHub 저장소 오른쪽 **About** 영역에 표시될 내용을 정리했습�
 
 **Description (복사해서 사용)**
 
-> Monitor selected Chrome tabs and automatically click Continue buttons when enabled. Multi-URL lists, per-tab controls, local settings.
+> 여러 URL의 탭에서 '계속/Continue' 버튼이 활성화되면 자동 클릭하는 Chrome 확장프로그램 | URL별 ON/OFF · 로컬 저장
 
 **Website**
 
 `https://GITHUB_USERNAME.github.io/REPOSITORY_NAME/`
 
-`github-bootstrap.cmd`는 로그인한 GitHub 사용자명과 입력한 저장소 이름으로 위 주소를 자동 계산합니다. 본인 계정의 `USERNAME.github.io` 특별 저장소는 루트 주소를 사용합니다. GitHub Pages 배포 후 실제 사이트가 열리는지 확인하세요.
+`publish.cmd`는 로그인한 GitHub 사용자명과 입력한 저장소 이름으로 위 주소를 자동 계산합니다. 본인 계정의 `USERNAME.github.io` 특별 저장소는 루트 주소를 사용합니다. GitHub Pages 배포 후 실제 사이트가 열리는지 확인하세요.
 
 **Topics**
 
 `chrome-extension`, `manifest-v3`, `browser-automation`, `auto-clicker`, `tab-manager`, `javascript`, `github-pages`, `open-source`
 
-자동 적용되는 Description과 Topics는 `github-bootstrap.cmd` 상단의 `ABOUT_DESC`, `ABOUT_TOPICS`를 수정하세요. [`scripts/repository-about.json`](scripts/repository-about.json)은 참고용 메타데이터입니다.
+설명과 Topics의 원본은 [`scripts/repository-about.json`](scripts/repository-about.json)에 있습니다. 문구를 바꾸면 다음 `publish.cmd` 실행 때 About에 반영됩니다.
 
 ## Social Preview (수동 등록)
 

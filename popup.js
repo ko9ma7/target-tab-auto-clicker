@@ -2,7 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const addBtn=$('add-btn'), list=$('target-list'), enabled=$('global-switch');
-  let targets=[], tracked={}, stats={}, globalEnabled=true, timer=null, updating=false;
+  let targets=[], tracked={}, stats={}, checks={}, globalEnabled=true, timer=null, updating=false;
 
   function canonical(raw) {
     try {
@@ -31,6 +31,15 @@
     return isNaN(n.getTime()) ? '기록 없음' : new Intl.DateTimeFormat('ko-KR',{
       month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'
     }).format(n);
+  }
+  function formatNextCheck(value) {
+    if (!Number.isFinite(value)) return '다음 확인: 준비 중';
+    const diff = value - Date.now();
+    if (diff <= 0) return '다음 확인: 곧 시작';
+    const minutes = Math.ceil(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return `다음 확인: ${hours ? `${hours}시간 ` : ''}${rest}분 후 (${formatDate(value)})`;
   }
   function setToggle(targetId,checked,description) {
     const label=create('label','switch card-toggle');
@@ -71,6 +80,34 @@
       status.append(create('span','status-dot'),document.createTextNode('연결 확인 중'));
       const total=create('span','click-mini');total.dataset.role='clicks';
       state.append(status,total);
+      const schedule = create('div','schedule-info');
+      schedule.dataset.role='schedule';
+      const intervalRow = create('div','interval-row');
+      const intervalLabel = create('label','interval-caption','확인 주기');
+      const intervalInput = create('input','interval-edit');
+      intervalInput.type='number';intervalInput.min='1';intervalInput.max='48';intervalInput.step='1';
+      intervalInput.value=String(t.intervalHours || 5);
+      intervalInput.setAttribute('aria-label',`${t.url} 확인 주기 (시간)`);
+      intervalLabel.append(intervalInput,document.createTextNode(' 시간'));
+      intervalInput.addEventListener('change', async () => {
+        const hours=Number(intervalInput.value);
+        if (!Number.isInteger(hours) || hours < 1 || hours > 48) {
+          intervalInput.value=String(t.intervalHours || 5);
+          feedback('확인 주기는 1~48시간으로 설정하세요.',true);return;
+        }
+        try {
+          const next=targets.map(v=>v.id===t.id ? {...v,intervalHours:hours} : v);
+          await chrome.storage.local.set({targets:next});
+          targets=next;
+          feedback('확인 주기를 변경했습니다. 다음 확인 시각을 다시 계산합니다.');
+        } catch(e) {intervalInput.value=String(t.intervalHours || 5);feedback(`주기 저장 실패: ${e.message}`,true);}
+      });
+      intervalRow.append(intervalLabel);
+      const checkNow=create('button','mini-button','지금 확인');
+      checkNow.type='button';checkNow.dataset.role='check';
+      checkNow.disabled=!t.enabled || !globalEnabled;
+      checkNow.addEventListener('click',()=>void checkTarget(t.id,checkNow));
+      intervalRow.append(checkNow);
       const footer=create('div','card-footer');
       const label=create('span','button-label',`버튼: ${t.buttonLabel}`);
       label.title=t.buttonLabel;footer.append(label);
@@ -80,7 +117,7 @@
       remove.setAttribute('aria-label',`${t.url} 목록에서 삭제`);
       remove.addEventListener('click',()=>void removeTarget(t.id));
       footer.append(open,remove);
-      card.append(head,state,footer);list.append(card);
+      card.append(head,state,schedule,intervalRow,footer);list.append(card);
     }
     updateTotals();
     void updateStatuses();
@@ -89,18 +126,29 @@
     const count=targets.reduce((a,t)=>a+(Number(stats[t.id]?.clickCount)||0),0);
     $('total-clicks').textContent=`${count.toLocaleString('ko-KR')}회`;
   }
+  async function checkTarget(targetId,button) {
+    button.disabled=true;
+    try {
+      const response=await chrome.runtime.sendMessage({type:'CHECK_NOW',targetId});
+      if (response?.error) throw new Error(response.error);
+      await sync();
+      feedback('페이지 확인을 요청했습니다. 닫힌 탭은 자동으로 열립니다.');
+    } catch(e) {feedback(`확인 실패: ${e.message}`,true);}
+    finally {button.disabled=false;}
+  }
   async function reconcile() {
     const result=await chrome.runtime.sendMessage({type:'RECONCILE'});
     if (result?.error) throw new Error(result.error);
     return result;
   }
   async function sync() {
-    const s=await chrome.storage.local.get(['targets','trackedTabIds','statsByTarget','globalEnabled']);
+    const s=await chrome.storage.local.get(['targets','trackedTabIds','statsByTarget','checksByTarget','globalEnabled']);
     const next=Array.isArray(s.targets) ? s.targets : [];
     const changed=JSON.stringify(next)!==JSON.stringify(targets);
     targets=next;
     tracked=s.trackedTabIds || {};
     stats=s.statsByTarget || {};
+    checks=s.checksByTarget || {};
     globalEnabled=s.globalEnabled!==false;
     enabled.checked=globalEnabled;
     if (changed) render();
@@ -116,28 +164,36 @@
         const status=card.querySelector('[data-role=status]');
         const clicks=card.querySelector('[data-role=clicks]');
         const open=card.querySelector('[data-role=open]');
-        if (!status || !clicks || !open) return;
+        const schedule=card.querySelector('[data-role=schedule]');
+        const checkButton=card.querySelector('[data-role=check]');
+        if (checkButton) checkButton.disabled=!globalEnabled || !t.enabled;
+        if (!status || !clicks || !open || !schedule) return;
         const count=Number(stats[t.id]?.clickCount)||0;
-        clicks.textContent=`${count}회 클릭 · ${formatDate(stats[t.id]?.lastClickedAt)}`;
+        clicks.textContent=`${count}회 · 마지막 클릭 ${formatDate(stats[t.id]?.lastClickedAt)}`;
+        const check=checks[t.id] || {};
+        schedule.textContent=`${formatNextCheck(check.nextCheckAt)} · 최근 점검 ${formatDate(check.lastCheckedAt)}`;
+        if (check.lastError) schedule.title=check.lastError;
         const id=tracked[t.id];
         open.textContent=id==null?'탭 열기':'탭 이동';
-        let state='waiting', title='대상 탭 없음';
+        let state='waiting', title='예약 시각에 탭 자동 열기';
         if (!globalEnabled || !t.enabled) {state='off';title='감시 중지';}
         else if (id!=null) {
           let tab=null;
           try{tab=await chrome.tabs.get(id);}catch{}
-          if (tab?.discarded) {title='탭 절전 상태';}
-          else if (!tab) {title='탭 재연결 중';}
+          if (tab?.discarded) {title='절전 탭 · 확인 시 자동 복구';}
+          else if (!tab) {title='탭 자동 재연결 대기';}
           else {
             let detail=null;
             try {detail=await chrome.tabs.sendMessage(id,{type:'GET_STATUS'});}catch{}
-            const phases={disabled:['waiting','버튼 활성화 대기'],clicked:['clicked','자동 클릭 완료'],
-              'ready-not-armed':['waiting','비활성화 이력 대기'],waiting:['ready','버튼 감시 중'],
+            const phases={disabled:['waiting','버튼 활성화 대기'],clicked:['clicked','클릭 후 다음 단계 감시'],
+              waiting:['ready','버튼 감시 중'], 'rate-limited':['waiting','과다 클릭 보호 (10분 대기)'],'ambiguous':['waiting','동일 문구 버튼이 여러 개'],
               error:['waiting','감시 오류'],off:['off','감시 중지'],
               'not-target':['waiting','탭 연결 확인 중']};
             [state,title]=phases[detail?.phase] || ['waiting','페이지 연결 중'];
           }
         }
+        if (check.lastStatus==='permission-error') {state='off';title='사이트 접근 권한 필요';}
+        else if (check.lastStatus==='error' && state==='waiting') {title='확인 오류 · 다시 시도 예정';}
         status.replaceChildren(create('span','status-dot'),document.createTextNode(title));
         status.dataset.state=state;
       }));
@@ -187,12 +243,16 @@
       // permissions.request is initiated by the user gesture before other awaits.
       const granted=await chrome.permissions.request({origins:[origin]});
       if (!granted) {feedback('사이트 접근 권한을 허용해야 등록할 수 있습니다.',true);return;}
-      const entry={id:crypto.randomUUID(),url,buttonLabel,enabled:true};
+      const intervalHours=Number($('interval-input').value);
+      if (!Number.isInteger(intervalHours) || intervalHours<1 || intervalHours>48) {
+        feedback('확인 주기는 1~48시간으로 설정하세요.',true);return;
+      }
+      const entry={id:crypto.randomUUID(),url,buttonLabel,intervalHours,enabled:true};
       await chrome.storage.local.set({targets:[...targets,entry],globalEnabled:true});
       enabled.checked=true;
       await reconcile();await sync();render();
       $('url-input').value='';
-      feedback('URL을 등록했습니다. 목록에서 탭 상태를 확인할 수 있습니다.');
+      feedback('URL을 등록했습니다. 닫혀 있어도 백그라운드에서 자동 확인합니다.');
     } catch(e) {feedback(`등록 실패: ${e.message}`,true);}
     finally {addBtn.disabled=false;}
   });
@@ -209,12 +269,12 @@
   });
   $('refresh-all').addEventListener('click',async () => {
     $('refresh-all').disabled=true;
-    try {await reconcile();await sync();feedback('모든 대상 탭의 상태를 다시 확인했습니다.');}
+    try {const r=await chrome.runtime.sendMessage({type:'CHECK_NOW'});if(r?.error)throw new Error(r.error);await sync();feedback('모든 대상 페이지 확인을 요청했습니다.');}
     catch(e) {feedback(`새로고침 실패: ${e.message}`,true);}
     finally {$('refresh-all').disabled=false;}
   });
   chrome.storage.onChanged.addListener((changes,area) => {
-    if (area==='local' && (changes.targets || changes.trackedTabIds || changes.statsByTarget || changes.globalEnabled)) void sync();
+    if (area==='local' && (changes.targets || changes.trackedTabIds || changes.statsByTarget || changes.checksByTarget || changes.globalEnabled)) void sync();
   });
   async function init() {
     await reconcile();await sync();

@@ -1,11 +1,5 @@
 # Changelog
 
-## GitHub publisher adjustment · 2026-10-28
-
-- Attached `github-bootstrap.cmd` workflow adopted: separate `github-bootstrap.cmd`, `github-update.cmd`, and `git-safe-sync.cmd`.
-- Git root verification and fast-forward-only sync prevent accidentally pushing an ancestor Git repository or overwriting remote history.
-- Chrome extension feature version remains v3.0.0.
-
 ## Publisher hotfix · 2026-10-28
 
 - Windows CMD 게시 스크립트가 상위 폴더의 Git 저장소를 감지했을 때, 프로젝트 폴더가 상위 저장소에서 추적되지 않은 경우에는 독립적인 로컬 Git 저장소를 생성합니다.

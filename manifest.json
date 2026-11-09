@@ -1,15 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "대상 탭 자동 클릭 - 다중 URL 관리",
+  "name": "대상 탭 자동 클릭 - 예약 확인 및 자동 열기",
   "short_name": "탭 자동 클릭",
-  "description": "여러 URL을 등록·삭제하고 각각의 탭에서 지정 버튼의 활성화 상태를 감시합니다.",
-  "version": "3.0.0",
+  "description": "URL별 5시간 기본 확인 주기, 닫힌 탭 자동 열기, 반복 확인과 자동 클릭 기록을 지원합니다.",
+  "version": "4.0.0",
   "minimum_chrome_version": "102",
   "permissions": [
     "storage",
     "tabs",
     "scripting",
-    "webNavigation"
+    "webNavigation",
+    "alarms"
   ],
   "optional_host_permissions": [
     "https://*/*",
